@@ -1,0 +1,14 @@
+{
+  "name": "my-portfolio-remy-niyokwizerwa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env.local scripts/dev-server.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

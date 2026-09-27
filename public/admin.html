@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Site Editor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%230d1b22%22/%3E%3Ctext x=%2232%22 y=%2242%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2226%22 text-anchor=%22middle%22 fill=%22%234fd1c5%22%3ENR%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1b22; --bg-alt: #10232c; --surface: #142b36; --surface-2: #1a3542; --input: #0f222b;
+    --border: rgba(79, 209, 197, 0.16); --border-strong: rgba(79, 209, 197, 0.35);
+    --text: #e6f1f3; --muted: #93adb5; --teal: #4fd1c5; --teal-dim: rgba(79, 209, 197, 0.12);
+    --gold: #d4a853; --gold-dim: rgba(212, 168, 83, 0.14); --danger: #f27b7b; --danger-dim: rgba(242, 123, 123, 0.12);
+    --font-display: "Syne", system-ui, sans-serif; --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.55; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  a { color: var(--teal); }
+  svg { width: 18px; height: 18px; flex-shrink: 0; }
+  [hidden] { display: none !important; }
+  h1, h2, h3 { font-family: var(--font-display); line-height: 1.2; }
+
+  button, input, textarea, select { font: inherit; color: inherit; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 9px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2);
+    font-weight: 600; font-size: .9rem; cursor: pointer; white-space: nowrap; text-decoration: none; color: var(--text);
+    transition: background .15s, border-color .15s, color .15s, opacity .15s;
+  }
+  .btn:hover { border-color: var(--border-strong); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--teal); border-color: var(--teal); color: #07231f; }
+  .btn-primary:hover { background: #6fe0d5; }
+  .btn-ghost { background: transparent; }
+  .btn-danger { color: var(--danger); background: transparent; }
+  .btn-danger:hover { background: var(--danger-dim); border-color: var(--danger); }
+  .btn-sm { padding: 6px 10px; font-size: .82rem; border-radius: 8px; }
+  .btn-icon { padding: 6px; width: 32px; height: 32px; }
+  .btn-icon svg { width: 16px; height: 16px; }
+
+  /* ---------- LOGIN ---------- */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; position: fixed; inset: 0; background: var(--bg); z-index: 50; }
+  .login form { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px 28px; }
+  .login h1 { font-size: 1.5rem; margin-bottom: 6px; }
+  .login h1 span { color: var(--teal); }
+  .login p { color: var(--muted); margin-bottom: 22px; font-size: .92rem; }
+  .login .btn { width: 100%; margin-top: 16px; padding: 12px; }
+  .login .error { color: var(--danger); font-size: .88rem; margin-top: 12px; min-height: 1.2em; }
+  .login .back { display: block; text-align: center; margin-top: 18px; font-size: .88rem; color: var(--muted); text-decoration: none; }
+
+  /* ---------- LAYOUT ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px;
+    padding: 12px 24px; background: rgba(13, 27, 34, .94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  }
+  .brand { font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; margin-right: auto; }
+  .brand span { color: var(--teal); }
+  .save-state { font-size: .85rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .save-state .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+  .save-state.dirty .dot { background: var(--gold); }
+  .save-state.error { color: var(--danger); }
+  .save-state.error .dot { background: var(--danger); }
+
+  .layout { display: grid; grid-template-columns: 220px 1fr; max-width: 1180px; margin: 0 auto; gap: 32px; padding: 28px 24px 120px; }
+  .tabs { position: sticky; top: 90px; align-self: start; display: flex; flex-direction: column; gap: 4px; }
+  .tab {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; border: 0;
+    background: transparent; color: var(--muted); font-weight: 500; text-align: left; cursor: pointer;
+  }
+  .tab:hover { color: var(--text); background: var(--surface); }
+  .tab.active { color: var(--teal); background: var(--teal-dim); }
+  .tab .count { margin-left: auto; font-size: .75rem; background: var(--surface-2); color: var(--muted); padding: 1px 8px; border-radius: 99px; }
+
+  .panel-head { margin-bottom: 22px; }
+  .panel-head h2 { font-size: 1.6rem; margin-bottom: 4px; }
+  .panel-head p { color: var(--muted); }
+
+  /* ---------- FORM ---------- */
+  .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field.full { grid-column: 1 / -1; }
+  .field > label, .field > .label { font-size: .85rem; font-weight: 600; color: var(--text); }
+  .hint { font-size: .8rem; color: var(--muted); }
+  input[type=text], input[type=email], input[type=tel], input[type=url], input[type=password], textarea, select {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--input);
+    outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+  input:focus, textarea:focus, select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-dim); }
+  select { cursor: pointer; }
+  .range { display: flex; align-items: center; gap: 12px; }
+  .range input { flex: 1; accent-color: var(--teal); }
+  .range output { min-width: 44px; text-align: right; font-weight: 600; color: var(--teal); }
+
+  .group { grid-column: 1 / -1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .group > h3 { font-size: 1rem; margin-bottom: 14px; font-family: var(--font-body); font-weight: 700; }
+
+  /* list items */
+  .list { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; }
+  .list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .list-head .label { font-weight: 700; }
+  .item { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .item-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; cursor: pointer; user-select: none; }
+  .item-head:hover { background: rgba(255,255,255,.02); }
+  .item-title { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-title small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .chev { transition: transform .2s; color: var(--muted); }
+  .item.open .chev { transform: rotate(90deg); }
+  .item-body { padding: 4px 16px 18px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .item:not(.open) .item-body { display: none; }
+  .item-actions { display: flex; gap: 4px; }
+  .empty { padding: 22px; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 14px; }
+  .sub .item { background: var(--bg-alt); }
+
+  /* uploads */
+  .upload-one { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .thumb { width: 120px; height: 120px; border-radius: 12px; background: var(--input) center/cover no-repeat; border: 1px solid var(--border); display: grid; place-items: center; color: var(--muted); font-size: .8rem; text-align: center; flex-shrink: 0; overflow: hidden; }
+  .thumb.portrait { width: 110px; height: 138px; }
+  .upload-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .file-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--input); border: 1px solid var(--border); font-size: .88rem; max-width: 100%; }
+  .file-chip a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+  .g-item { position: relative; aspect-ratio: 4/3; border-radius: 10px; overflow: hidden; background: var(--input) center/cover no-repeat; border: 1px solid var(--border); }
+  .g-item .g-tools { position: absolute; inset: auto 0 0 0; display: flex; justify-content: space-between; padding: 6px; background: linear-gradient(transparent, rgba(0,0,0,.7)); }
+  .g-item .btn-icon { width: 28px; height: 28px; background: rgba(13,27,34,.85); }
+  .g-item .cover { position: absolute; top: 6px; left: 6px; font-size: .7rem; font-weight: 700; background: var(--teal); color: #07231f; padding: 2px 7px; border-radius: 6px; }
+  .g-add { aspect-ratio: 4/3; border-radius: 10px; border: 1px dashed var(--border-strong); background: transparent; color: var(--teal); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-weight: 600; font-size: .85rem; }
+  .g-add:hover { background: var(--teal-dim); }
+  .uploading { opacity: .6; pointer-events: none; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); z-index: 60;
+    padding: 12px 18px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border-strong);
+    box-shadow: 0 12px 40px rgba(0,0,0,.4); opacity: 0; transition: opacity .25s, transform .25s; max-width: calc(100% - 32px);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  .note { background: var(--gold-dim); border: 1px solid rgba(212,168,83,.3); color: var(--text); border-radius: 12px; padding: 12px 16px; font-size: .88rem; margin-bottom: 22px; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; gap: 18px; padding: 16px 16px 120px; }
+    .tabs { position: sticky; top: 61px; z-index: 10; flex-direction: row; overflow-x: auto; background: var(--bg); padding: 8px 0; margin: 0 -16px; padding-left: 16px; padding-right: 16px; scrollbar-width: none; }
+    .tab { white-space: nowrap; flex-shrink: 0; }
+    .tab .count { display: none; }
+    .topbar { padding: 10px 16px; gap: 8px; }
+    .topbar .label-long { display: none; }
+    .save-state .txt { display: none; }
+  }
+  @media (max-width: 560px) {
+    .fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6H3M21 12H3M15.1 18H3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+    <symbol id="i-grad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+    <symbol id="i-brief" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  </defs>
+</svg>
+
+<!-- LOGIN -->
+<div class="login" id="login" hidden>
+  <form id="loginForm">
+    <h1>Site <span>editor</span></h1>
+    <p id="loginMsg">Sign in to edit your portfolio.</p>
+    <label for="pw" class="hint">Password</label>
+    <input type="password" id="pw" autocomplete="current-password" required style="margin-top:6px">
+    <button class="btn btn-primary" type="submit" id="loginBtn">Sign in</button>
+    <div class="error" id="loginErr" role="alert"></div>
+    <a class="back" href="/">← Back to the site</a>
+  </form>
+</div>
+
+<!-- EDITOR -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand">Site <span>editor</span></div>
+    <div class="save-state" id="saveState" aria-live="polite"><span class="dot"></span><span class="txt">All changes saved</span></div>
+    <a class="btn btn-ghost" href="/" target="_blank" rel="noopener"><svg><use href="#i-eye"/></svg><span class="label-long">View site</span></a>
+    <button class="btn btn-primary" id="saveBtn" disabled><svg><use href="#i-save"/></svg>Save</button>
+    <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sign out" aria-label="Sign out"><svg><use href="#i-out"/></svg></button>
+  </header>
+  <div class="layout">
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+    <main id="panel"></main>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ================= SCHEMA: what can be edited =================
+  const ICON_OPTIONS = [
+    ['chip', 'Chip'], ['radio', 'Radio / signal'], ['cpu', 'Processor'], ['code', 'Code'], ['network', 'Network'],
+    ['board', 'Circuit board'], ['wave', 'Waveform'], ['bulb', 'Light bulb'], ['wrench', 'Wrench'], ['zap', 'Lightning'],
+    ['cloud', 'Cloud'], ['users', 'People'],
+  ];
+  const SOCIAL_OPTIONS = [
+    ['linkedin', 'LinkedIn'], ['github', 'GitHub'], ['email', 'Email'], ['website', 'Website'], ['x', 'X (Twitter)'],
+    ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['youtube', 'YouTube'], ['whatsapp', 'WhatsApp'], ['other', 'Other link'],
+  ];
+
+  const TABS = [
+    { id: 'profile', label: 'Profile', icon: 'user', title: 'Profile', desc: 'The top of your page: name, title, photo and CV.', fields: [
+      { key: 'name', label: 'Full name', type: 'text' },
+      { key: 'title', label: 'Job title', type: 'text' },
+      { key: 'location', label: 'Location', type: 'text' },
+      { key: 'status', label: 'Status badge', type: 'text', hint: 'e.g. "Open to opportunities". Leave empty to hide.' },
+      { key: 'tagline', label: 'Tagline', type: 'textarea', full: true, rows: 2 },
+      { key: 'photo', label: 'Profile photo', type: 'image', full: true, portrait: true, hint: 'A portrait photo works best. Large photos are resized automatically.' },
+      { key: 'cv', label: 'CV / Resume (PDF)', type: 'file', accept: 'application/pdf', full: true, hint: 'Adds a "Download CV" button. Max 3 MB.' },
+    ] },
+    { id: 'about', label: 'About', icon: 'text', title: 'About me', desc: 'Your story and a few highlight numbers.', fields: [
+      { key: 'about', label: 'About text', type: 'textarea', full: true, rows: 9, hint: 'Leave an empty line between paragraphs.' },
+      { key: 'degree', label: 'Degree (shown in Quick info)', type: 'text', full: true },
+      { key: 'stats', label: 'Highlight numbers', type: 'list', addLabel: 'Add number', itemTitle: (s) => [s.value, s.label].filter(Boolean).join(' '),
+        item: [ { key: 'value', label: 'Number', type: 'text', hint: 'e.g. 3+' }, { key: 'label', label: 'Label', type: 'text', hint: 'e.g. Years experience' } ],
+        blank: () => ({ value: '', label: '' }) },
+    ] },
+    { id: 'contact', label: 'Contact & links', icon: 'mail', title: 'Contact & social links', desc: 'How people reach you. Shown in About and Contact.', fields: [
+      { key: 'email', label: 'Email', type: 'email' },
+      { key: 'phone', label: 'Phone', type: 'tel' },
+      { key: 'contactText', label: 'Contact message', type: 'textarea', full: true, rows: 2 },
+      { key: 'socials', label: 'Social media & links', type: 'list', addLabel: 'Add link',
+        itemTitle: (s) => (SOCIAL_OPTIONS.find((o) => o[0] === s.platform) || ['', 'Link'])[1] + (s.url ? ' — ' + s.url : ''),
+        item: [
+          { key: 'platform', label: 'Platform', type: 'select', options: SOCIAL_OPTIONS },
+          { key: 'url', label: 'Link', type: 'text', hint: 'Full address, e.g. https://linkedin.com/in/you. For WhatsApp you can type the number.' },
+          { key: 'label', label: 'Button text (optional)', type: 'text', full: true },
+        ],
+        blank: () => ({ platform: 'linkedin', url: '', label: '' }) },
+    ] },
+    { id: 'education', label: 'Education', icon: 'grad', title: 'Education', desc: 'Schools and qualifications, newest first.', fields: [
+      { key: 'education', type: 'list', addLabel: 'Add education', itemTitle: (e) => e.title, itemSub: (e) => e.dates,
+        item: [
+          { key: 'title', label: 'Degree / certificate', type: 'text', full: true },
+          { key: 'org', label: 'School / university', type: 'text' },
+          { key: 'dates', label: 'Dates', type: 'text', hint: 'e.g. 2019 – 2023' },
+          { key: 'description', label: 'Description', type: 'textarea', full: true },
+          { key: 'tags', label: 'Tags', type: 'tags', full: true },
+        ],
+        blank: () => ({ title: '', org: '', dates: '', description: '', tags: [] }) },
+    ] },
+    { id: 'experience', label: 'Experience', icon: 'brief', title: 'Experience', desc: 'Jobs, internships and roles, newest first.', fields: [
+      { key: 'experience', type: 'list', addLabel: 'Add experience', itemTitle: (e) => e.title, itemSub: (e) => e.org,
+        item: [
+          { key: 'title', label: 'Job title', type: 'text' },
+          { key: 'dates', label: 'Dates', type: 'text', hint: 'e.g. Jan 2024 – Present' },
+          { key: 'org', label: 'Company, city', type: 'text', full: true },
+          { key: 'bullets', label: 'What you did', type: 'lines', full: true, hint: 'One point per line.' },
+          { key: 'tags', label: 'Tags', type: 'tags', full: true },
+        ],
+        blank: () => ({ title: '', org: '', dates: '', bullets: [], tags: [] }) },
+    ] },
+    { id: 'skills', label: 'Skills', icon: 'chip', title: 'Skills', desc: 'Each skill shows as a card with a level bar.', fields: [
+      { key: 'skills', type: 'list', addLabel: 'Add skill', itemTitle: (s) => s.name, itemSub: (s) => (s.level ? s.level + '%' : ''),
+        item: [
+          { key: 'name', label: 'Skill', type: 'text' },
+          { key: 'icon', label: 'Icon', type: 'select', options: ICON_OPTIONS },
+          { key: 'description', label: 'Short description', type: 'text', full: true },
+          { key: 'level', label: 'Level', type: 'range', full: true, hint: 'Set to 0 to hide the bar.' },
+        ],
+        blank: () => ({ name: '', description: '', level: 75, icon: 'chip' }) },
+    ] },
+    { id: 'projects', label: 'Projects', icon: 'folder', title: 'Projects & gallery', desc: 'Upload photos for each project. The first photo is the cover; visitors can click to see all of them.', fields: [
+      { key: 'projects', type: 'list', addLabel: 'Add project', itemTitle: (p) => p.title, itemSub: (p) => (p.images?.length ? p.images.length + ' photo' + (p.images.length > 1 ? 's' : '') : ''),
+        item: [
+          { key: 'title', label: 'Project title', type: 'text', full: true },
+          { key: 'description', label: 'Description', type: 'textarea', full: true, rows: 3 },
+          { key: 'images', label: 'Photos', type: 'images', full: true },
+          { key: 'tags', label: 'Tags', type: 'tags', full: true },
+          { key: 'link', label: 'Project link (optional)', type: 'text', hint: 'GitHub, video, article…' },
+          { key: 'linkLabel', label: 'Link button text', type: 'text', hint: 'e.g. View on GitHub' },
+        ],
+        blank: () => ({ title: '', description: '', images: [], tags: [], link: '', linkLabel: '' }) },
+    ] },
+    { id: 'references', label: 'References', icon: 'users', title: 'References', desc: 'People who can vouch for your work. Only add people who agreed to it.', fields: [
+      { key: 'references', type: 'list', addLabel: 'Add reference', itemTitle: (r) => r.name, itemSub: (r) => r.role,
+        item: [
+          { key: 'name', label: 'Name', type: 'text' },
+          { key: 'role', label: 'Title / role', type: 'text' },
+          { key: 'org', label: 'Organization', type: 'text', full: true },
+          { key: 'email', label: 'Email', type: 'email' },
+          { key: 'phone', label: 'Phone', type: 'tel' },
+        ],
+        blank: () => ({ name: '', role: '', org: '', email: '', phone: '' }) },
+    ] },
+    { id: 'account', label: 'Password', icon: 'lock', title: 'Change password', desc: 'Change the password you use to open this editor.', custom: renderAccount },
+  ];
+
+  // ================= STATE =================
+  let content = null;
+  let dirty = false;
+  let saving = false;
+  let activeTab = 'profile';
+  const openItems = new Set(); // remembers expanded list items across re-renders
+
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, attrs = {}, ...children) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else if (k in n && k !== 'list') n[k] = v;
+      else n.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of children.flat()) if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(c));
+    return n;
+  };
+  const svg = (name) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.innerHTML = `<use href="#i-${name}"/>`; return s; };
+
+  let toastTimer;
+  function toast(msg, isError) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), isError ? 5000 : 2600);
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      ...opts,
+      headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
+      credentials: 'same-origin',
+    });
+    let data = {};
+    try { data = await res.json(); } catch {}
+    if (res.status === 401 && path !== '/api/login') { showLogin('Your session ended. Sign in again — your edits are kept.'); }
+    if (!res.ok) { const e = new Error(data.error || 'Request failed (' + res.status + ')'); e.status = res.status; throw e; }
+    return data;
+  }
+
+  // ================= SAVE STATE =================
+  function setDirty(v = true) {
+    dirty = v;
+    const s = $('saveState');
+    s.classList.toggle('dirty', dirty);
+    s.classList.remove('error');
+    s.querySelector('.txt').textContent = dirty ? 'Unsaved changes' : 'All changes saved';
+    $('saveBtn').disabled = !dirty || saving;
+  }
+
+  async function save() {
+    if (!dirty || saving) return;
+    saving = true;
+    $('saveBtn').disabled = true;
+    $('saveState').querySelector('.txt').textContent = 'Saving…';
+    try {
+      await api('/api/content', { method: 'PUT', body: JSON.stringify({ content }) });
+      saving = false;
+      setDirty(false);
+      toast('Saved — your site is updated.');
+    } catch (err) {
+      saving = false;
+      $('saveBtn').disabled = false;
+      const s = $('saveState');
+      s.classList.add('error');
+      s.querySelector('.txt').textContent = 'Not saved';
+      if (err.status !== 401) toast('Could not save: ' + err.message, true);
+    }
+  }
+
+  // ================= FILE UPLOADS =================
+  // Photos are resized in the browser so uploads stay small and fast.
+  function resizeImage(file, maxSide = 1800, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+      if (file.type === 'image/gif') return resolve(file);
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.round(img.naturalWidth * scale);
+        const h = Math.round(img.naturalHeight * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not process image'))), 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('That file is not an image this browser can read')); };
+      img.src = url;
+    });
+  }
+
+  const toBase64 = (blob) => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+
+  async function uploadFile(file) {
+    let blob = file;
+    let mime = file.type;
+    if (file.type.startsWith('image/')) {
+      blob = await resizeImage(file);
+      mime = blob.type || file.type;
+    } else if (file.type !== 'application/pdf') {
+      throw new Error('Please choose an image (JPG, PNG, WebP, GIF) or a PDF');
+    }
+    if (blob.size > 3 * 1024 * 1024) throw new Error('File is larger than 3 MB');
+    const name = mime === 'image/jpeg' ? file.name.replace(/\.\w+$/, '') + '.jpg' : file.name;
+    const res = await api('/api/upload', { method: 'POST', body: JSON.stringify({ name, mime, data: await toBase64(blob) }) });
+    return res;
+  }
+
+  function pickFiles({ accept, multiple }) {
+    return new Promise((resolve) => {
+      const input = el('input', { type: 'file', accept, multiple });
+      input.addEventListener('change', () => resolve([...input.files]));
+      input.click();
+    });
+  }
+
+  // ================= FIELD RENDERERS =================
+  function renderFields(fields, obj, onChange, path) {
+    const wrap = el('div', { class: 'fields' });
+    for (const f of fields) wrap.append(renderField(f, obj, onChange, path + '.' + f.key));
+    return wrap;
+  }
+
+  function renderField(f, obj, onChange, path) {
+    const id = 'f' + path.replace(/\W/g, '_');
+    const change = (v) => { obj[f.key] = v; setDirty(); onChange && onChange(); };
+    const box = el('div', { class: 'field' + (f.full || ['list', 'images'].includes(f.type) ? ' full' : '') });
+    const label = f.label ? el('label', { for: id }, f.label) : null;
+    const hint = f.hint ? el('span', { class: 'hint' }, f.hint) : null;
+    const add = (...nodes) => box.append(...nodes.filter(Boolean));
+
+    switch (f.type) {
+      case 'text': case 'email': case 'tel': {
+        const input = el('input', { id, type: f.type, value: obj[f.key] ?? '', autocomplete: 'off' });
+        input.addEventListener('input', () => change(input.value));
+        add(label, input, hint);
+        break;
+      }
+      case 'textarea': {
+        const ta = el('textarea', { id, rows: f.rows || 4 });
+        ta.value = obj[f.key] ?? '';
+        ta.addEventListener('input', () => change(ta.value));
+        add(label, ta, hint);
+        break;
+      }
+      case 'tags': {
+        const input = el('input', { id, type: 'text', value: (obj[f.key] || []).join(', '), placeholder: 'Separate with commas' });
+        input.addEventListener('input', () => change(input.value.split(',').map((s) => s.trim()).filter(Boolean)));
+        add(label, input, hint || el('span', { class: 'hint' }, 'Separate with commas.'));
+        break;
+      }
+      case 'lines': {
+        const ta = el('textarea', { id, rows: 4 });
+        ta.value = (obj[f.key] || []).join('\n');
+        ta.addEventListener('input', () => change(ta.value.split('\n').map((s) => s.trim()).filter(Boolean)));
+        add(label, ta, hint);
+        break;
+      }
+      case 'select': {
+        const sel = el('select', { id }, f.options.map(([v, t]) => el('option', { value: v }, t)));
+        sel.value = obj[f.key] ?? f.options[0][0];
+        sel.addEventListener('change', () => change(sel.value));
+        add(label, sel, hint);
+        break;
+      }
+      case 'range': {
+        const val = Number(obj[f.key]) || 0;
+        const out = el('output', {}, val + '%');
+        const input = el('input', { id, type: 'range', min: 0, max: 100, step: 1, value: val });
+        input.addEventListener('input', () => { out.textContent = input.value + '%'; change(Number(input.value)); });
+        add(label, el('div', { class: 'range' }, input, out), hint);
+        break;
+      }
+      case 'image': add(el('span', { class: 'label' }, f.label), renderImage(f, obj, change), hint); break;
+      case 'file': add(el('span', { class: 'label' }, f.label), renderFile(f, obj, change), hint); break;
+      case 'images': add(el('span', { class: 'label' }, f.label), renderGallery(f, obj, change), hint); break;
+      case 'list': add(renderList(f, obj, path)); break;
+    }
+    return box;
+  }
+
+  function renderImage(f, obj, change) {
+    const wrap = el('div', { class: 'upload-one' });
+    const draw = () => {
+      wrap.replaceChildren();
+      const url = obj[f.key];
+      const thumb = el('div', { class: 'thumb' + (f.portrait ? ' portrait' : '') });
+      if (url) thumb.style.backgroundImage = `url("${url}")`; else thumb.textContent = 'No photo';
+      const up = el('button', { class: 'btn btn-sm', type: 'button' }, svg('upload'), url ? 'Replace photo' : 'Upload photo');
+      up.addEventListener('click', async () => {
+        const [file] = await pickFiles({ accept: 'image/*' });
+        if (!file) return;
+        wrap.classList.add('uploading'); up.lastChild.textContent = 'Uploading…';
+        try { const r = await uploadFile(file); change(r.url); toast('Photo uploaded. Click Save to publish.'); }
+        catch (e) { if (e.status !== 401) toast(e.message, true); }
+        wrap.classList.remove('uploading'); draw();
+      });
+      const actions = el('div', { class: 'upload-actions' }, up);
+      if (url) {
+        const rm = el('button', { class: 'btn btn-sm btn-danger', type: 'button' }, svg('trash'), 'Remove');
+        rm.addEventListener('click', () => { change(''); draw(); });
+        actions.append(rm);
+      }
+      wrap.append(thumb, actions);
+    };
+    draw();
+    return wrap;
+  }
+
+  function renderFile(f, obj, change) {
+    const wrap = el('div', { class: 'upload-one' });
+    const draw = () => {
+      wrap.replaceChildren();
+      const url = obj[f.key];
+      if (url) wrap.append(el('span', { class: 'file-chip' }, svg('file'), el('a', { href: url, target: '_blank', rel: 'noopener' }, 'Current file')));
+      const up = el('button', { class: 'btn btn-sm', type: 'button' }, svg('upload'), url ? 'Replace file' : 'Upload PDF');
+      up.addEventListener('click', async () => {
+        const [file] = await pickFiles({ accept: f.accept });
+        if (!file) return;
+        wrap.classList.add('uploading'); up.lastChild.textContent = 'Uploading…';
+        try { const r = await uploadFile(file); change(r.url); toast('File uploaded. Click Save to publish.'); }
+        catch (e) { if (e.status !== 401) toast(e.message, true); }
+        wrap.classList.remove('uploading'); draw();
+      });
+      wrap.append(up);
+      if (url) {
+        const rm = el('button', { class: 'btn btn-sm btn-danger', type: 'button' }, svg('trash'), 'Remove');
+        rm.addEventListener('click', () => { change(''); draw(); });
+        wrap.append(rm);
+      }
+    };
+    draw();
+    return wrap;
+  }
+
+  function renderGallery(f, obj, change) {
+    const grid = el('div', { class: 'gallery' });
+    const draw = () => {
+      grid.replaceChildren();
+      const imgs = obj[f.key] || [];
+      imgs.forEach((url, i) => {
+        const tools = el('div', { class: 'g-tools' });
+        const left = el('button', { class: 'btn btn-icon', type: 'button', title: 'Move left', 'aria-label': 'Move left', disabled: i === 0 }, svg('left'));
+        left.addEventListener('click', () => { const a = [...imgs]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; change(a); draw(); });
+        const del = el('button', { class: 'btn btn-icon btn-danger', type: 'button', title: 'Remove photo', 'aria-label': 'Remove photo' }, svg('trash'));
+        del.addEventListener('click', () => { change(imgs.filter((_, j) => j !== i)); draw(); });
+        const right = el('button', { class: 'btn btn-icon', type: 'button', title: 'Move right', 'aria-label': 'Move right', disabled: i === imgs.length - 1 }, svg('right'));
+        right.addEventListener('click', () => { const a = [...imgs]; [a[i + 1], a[i]] = [a[i], a[i + 1]]; change(a); draw(); });
+        tools.append(left, del, right);
+        const item = el('div', { class: 'g-item' }, i === 0 ? el('span', { class: 'cover' }, 'Cover') : null, tools);
+        item.style.backgroundImage = `url("${url}")`;
+        grid.append(item);
+      });
+      const add = el('button', { class: 'g-add', type: 'button' }, svg('plus'), 'Add photos');
+      add.addEventListener('click', async () => {
+        const files = await pickFiles({ accept: 'image/*', multiple: true });
+        if (!files.length) return;
+        grid.classList.add('uploading');
+        let ok = 0;
+        for (const [n, file] of files.entries()) {
+          add.lastChild.textContent = `Uploading ${n + 1}/${files.length}…`;
+          try { const r = await uploadFile(file); change([...(obj[f.key] || []), r.url]); ok++; }
+          catch (e) { if (e.status === 401) break; toast(file.name + ': ' + e.message, true); }
+        }
+        grid.classList.remove('uploading');
+        if (ok) toast(`${ok} photo${ok > 1 ? 's' : ''} uploaded. Click Save to publish.`);
+        draw();
+      });
+      grid.append(add);
+    };
+    draw();
+    return grid;
+  }
+
+  function renderList(f, obj, path) {
+    if (!Array.isArray(obj[f.key])) obj[f.key] = [];
+    const wrap = el('div', { class: 'list' + (path.split('.').length > 2 ? ' sub' : '') });
+    const draw = () => {
+      const items = obj[f.key];
+      wrap.replaceChildren();
+      const add = el('button', { class: 'btn btn-sm', type: 'button' }, svg('plus'), f.addLabel || 'Add');
+      add.addEventListener('click', () => {
+        items.push(f.blank());
+        openItems.add(path + ':' + (items.length - 1));
+        setDirty(); draw(); refreshCounts();
+        const last = wrap.querySelector('.item:last-of-type input, .item:last-of-type textarea, .item:last-of-type select');
+        last && last.focus();
+      });
+      wrap.append(el('div', { class: 'list-head' }, el('span', { class: 'label' }, f.label || ''), add));
+      if (!items.length) wrap.append(el('div', { class: 'empty' }, 'Nothing here yet. Empty sections are hidden on your site.'));
+
+      items.forEach((it, i) => {
+        const key = path + ':' + i;
+        const titleText = el('span', {});
+        const sub = el('small', {});
+        const setTitle = () => {
+          titleText.textContent = (f.itemTitle && f.itemTitle(it)) || 'Untitled';
+          sub.textContent = (f.itemSub && f.itemSub(it)) || '';
+        };
+        setTitle();
+
+        const btn = (icon, title, fn, disabled, cls = '') => {
+          const b = el('button', { class: 'btn btn-ghost btn-icon ' + cls, type: 'button', title, 'aria-label': title, disabled }, svg(icon));
+          b.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+          return b;
+        };
+        const move = (d) => {
+          const j = i + d;
+          [items[i], items[j]] = [items[j], items[i]];
+          const a = openItems.has(key), b = openItems.has(path + ':' + j);
+          openItems[b ? 'add' : 'delete'](key); openItems[a ? 'add' : 'delete'](path + ':' + j);
+          setDirty(); draw();
+        };
+        const actions = el('div', { class: 'item-actions' },
+          btn('up', 'Move up', () => move(-1), i === 0),
+          btn('down', 'Move down', () => move(1), i === items.length - 1),
+          btn('trash', 'Delete', () => {
+            if (!confirm(`Delete "${titleText.textContent}"?`)) return;
+            items.splice(i, 1);
+            // shift remembered open states
+            const opened = [...openItems].filter((k) => k.startsWith(path + ':'));
+            opened.forEach((k) => openItems.delete(k));
+            opened.map((k) => +k.split(':').pop()).filter((n) => n !== i).forEach((n) => openItems.add(path + ':' + (n > i ? n - 1 : n)));
+            setDirty(); draw(); refreshCounts();
+          }, false, 'btn-danger'));
+
+        const head = el('div', { class: 'item-head', role: 'button', tabindex: 0, 'aria-expanded': openItems.has(key) },
+          svg('right'), el('div', { class: 'item-title' }, titleText, sub), actions);
+        head.firstChild.classList.add('chev');
+        const itemEl = el('div', { class: 'item' + (openItems.has(key) ? ' open' : '') }, head);
+        const toggle = () => {
+          const open = itemEl.classList.toggle('open');
+          head.setAttribute('aria-expanded', open);
+          openItems[open ? 'add' : 'delete'](key);
+          if (open && !itemEl.querySelector('.item-body')) itemEl.append(body());
+        };
+        head.addEventListener('click', toggle);
+        head.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === head) { e.preventDefault(); toggle(); } });
+        const body = () => el('div', { class: 'item-body' }, renderFields(f.item, it, setTitle, key));
+        if (openItems.has(key)) itemEl.append(body());
+        wrap.append(itemEl);
+      });
+    };
+    draw();
+    return wrap;
+  }
+
+  // ================= ACCOUNT TAB =================
+  function renderAccount() {
+    const cur = el('input', { type: 'password', id: 'pwCur', autocomplete: 'current-password' });
+    const nx = el('input', { type: 'password', id: 'pwNew', autocomplete: 'new-password', minLength: 10 });
+    const cf = el('input', { type: 'password', id: 'pwConf', autocomplete: 'new-password' });
+    const btn = el('button', { class: 'btn btn-primary', type: 'submit' }, 'Change password');
+    const form = el('form', { class: 'group' },
+      el('div', { class: 'fields' },
+        el('div', { class: 'field full' }, el('label', { for: 'pwCur' }, 'Current password'), cur),
+        el('div', { class: 'field' }, el('label', { for: 'pwNew' }, 'New password'), nx, el('span', { class: 'hint' }, 'At least 10 characters.')),
+        el('div', { class: 'field' }, el('label', { for: 'pwConf' }, 'Repeat new password'), cf),
+        el('div', { class: 'field full' }, el('div', {}, btn))));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (nx.value.length < 10) return toast('New password must be at least 10 characters', true);
+      if (nx.value !== cf.value) return toast('The new passwords do not match', true);
+      btn.disabled = true;
+      try {
+        await api('/api/password', { method: 'POST', body: JSON.stringify({ current: cur.value, next: nx.value }) });
+        form.reset();
+        toast('Password changed. Use the new one next time you sign in.');
+      } catch (err) { if (err.status !== 401) toast(err.message, true); }
+      btn.disabled = false;
+    });
+    return el('div', {}, el('p', { class: 'note' }, 'Write the new password somewhere safe. If you forget it, it can be reset from the Vercel project settings.'), form);
+  }
+
+  // ================= TABS & PANEL =================
+  function count(tab) {
+    const f = tab.fields && tab.fields.length === 1 && tab.fields[0].type === 'list' ? tab.fields[0] : null;
+    return f ? (content[f.key] || []).length : null;
+  }
+
+  function refreshCounts() {
+    document.querySelectorAll('.tab').forEach((b) => {
+      const tab = TABS.find((t) => t.id === b.dataset.tab);
+      const c = b.querySelector('.count');
+      if (c) c.textContent = count(tab);
+    });
+  }
+
+  function renderTabs() {
+    $('tabs').replaceChildren(...TABS.map((t) => {
+      const n = count(t);
+      const b = el('button', { class: 'tab' + (t.id === activeTab ? ' active' : ''), type: 'button', 'data-tab': t.id }, svg(t.icon), t.label, n != null ? el('span', { class: 'count' }, String(n)) : null);
+      b.dataset.tab = t.id;
+      b.addEventListener('click', () => { activeTab = t.id; renderTabs(); renderPanel(); window.scrollTo({ top: 0 }); history.replaceState(null, '', '#' + t.id); });
+      return b;
+    }));
+    const act = $('tabs').querySelector('.active');
+    act && act.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function renderPanel() {
+    const tab = TABS.find((t) => t.id === activeTab) || TABS[0];
+    const head = el('div', { class: 'panel-head' }, el('h2', {}, tab.title), el('p', {}, tab.desc));
+    const body = tab.custom ? tab.custom() : renderFields(tab.fields, content, null, tab.id);
+    $('panel').replaceChildren(head, body);
+  }
+
+  // ================= LOGIN / BOOT =================
+  function showLogin(msg) {
+    $('login').hidden = false;
+    $('loginMsg').textContent = msg || 'Sign in to edit your portfolio.';
+    $('loginErr').textContent = '';
+    setTimeout(() => $('pw').focus(), 50);
+  }
+
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('loginBtn');
+    btn.disabled = true; btn.textContent = 'Signing in…'; $('loginErr').textContent = '';
+    try {
+      await api('/api/login', { method: 'POST', body: JSON.stringify({ password: $('pw').value }) });
+      $('pw').value = '';
+      $('login').hidden = true;
+      if (!content) await loadEditor();
+    } catch (err) {
+      $('loginErr').textContent = err.message;
+    }
+    btn.disabled = false; btn.textContent = 'Sign in';
+  });
+
+  async function loadEditor() {
+    const { content: c } = await api('/api/content');
+    content = c;
+    const fromHash = location.hash.slice(1);
+    if (TABS.some((t) => t.id === fromHash)) activeTab = fromHash;
+    $('app').hidden = false;
+    renderTabs();
+    renderPanel();
+    setDirty(false);
+  }
+
+  $('saveBtn').addEventListener('click', save);
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  });
+  $('logoutBtn').addEventListener('click', async () => {
+    if (dirty && !confirm('You have unsaved changes. Sign out anyway?')) return;
+    await fetch('/api/logout', { method: 'POST' });
+    dirty = false;
+    location.reload();
+  });
+  window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  (async () => {
+    try {
+      const { authed } = await api('/api/session');
+      if (authed) await loadEditor(); else showLogin();
+    } catch (err) {
+      showLogin();
+      $('loginErr').textContent = 'The server is not reachable: ' + err.message;
+    }
+  })();
+})();
+</script>
+</body>
+</html>
