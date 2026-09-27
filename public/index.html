@@ -11,7 +11,13 @@
 <meta name="description" content="Niyokwizerwa Remy — Electronics and Telecommunication Engineer based in Kigali, Rwanda. Education, experience, skills, projects and contact.">
 <meta property="og:title" content="Niyokwizerwa Remy — Electronics & Telecommunication Engineer">
 <meta property="og:description" content="Portfolio and CV of Niyokwizerwa Remy, based in Kigali, Rwanda.">
-<meta property="og:type" content="website">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://remyniyokwizerwa.vercel.app/">
+<link rel="canonical" href="https://remyniyokwizerwa.vercel.app/">
+<meta name="author" content="Niyokwizerwa Remy">
+<script type="application/ld+json" id="personLd">
+{"@context":"https://schema.org","@type":"Person","name":"Niyokwizerwa Remy","alternateName":"Remy Niyokwizerwa","jobTitle":"Electronics & Telecommunication Engineer","address":{"@type":"PostalAddress","addressLocality":"Kigali","addressCountry":"RW"},"url":"https://remyniyokwizerwa.vercel.app/"}
+</script>
 <meta name="theme-color" content="#0d1b22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%230d1b22%22/%3E%3Ctext x=%2232%22 y=%2242%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2226%22 text-anchor=%22middle%22 fill=%22%234fd1c5%22%3ENR%3C/text%3E%3C/svg%3E">
 
@@ -683,6 +689,18 @@
     document.getElementById('footer').innerHTML =
       `© ${new Date().getFullYear()} <span>${esc(c.name)}</span>${has(c.title) ? ' · ' + esc(c.title) : ''}${has(c.location) ? ' · ' + esc(c.location) : ''}`;
     if (has(c.name)) document.title = c.name + (has(c.title) ? ' — ' + c.title : '');
+
+    // Keep Google's structured data in sync with what's entered in /admin.
+    const ld = { '@context': 'https://schema.org', '@type': 'Person', name: c.name, url: location.origin + '/' };
+    const nameParts2 = String(c.name || '').trim().split(/\s+/);
+    if (nameParts2.length > 1) ld.alternateName = [...nameParts2.slice(1), nameParts2[0]].join(' ');
+    if (has(c.title)) ld.jobTitle = c.title;
+    if (has(c.location)) ld.address = { '@type': 'PostalAddress', addressLocality: c.location };
+    if (has(c.email)) ld.email = 'mailto:' + c.email.trim();
+    if (safeUrl(c.photo)) ld.image = new URL(safeUrl(c.photo), location.origin).href;
+    const sameAs = list(c.socials).map((s) => safeUrl(s.url)).filter((u) => /^https?:/i.test(u));
+    if (sameAs.length) ld.sameAs = sameAs;
+    document.getElementById('personLd').textContent = JSON.stringify(ld);
 
     wireUp(c);
   }

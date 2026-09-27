@@ -2,11 +2,11 @@
 
 here is my portifolio that describes me and all my exprience and skills
 
-Live site: https://my-portfolio-remy-niyokwizerwa.vercel.app
+Live site: https://remyniyokwizerwa.vercel.app
 
 ## Editing the site
 
-Go to **/admin** (https://my-portfolio-remy-niyokwizerwa.vercel.app/admin), sign in with your password,
+Go to **/admin** (https://remyniyokwizerwa.vercel.app/admin), sign in with your password,
 change anything, upload photos, and click **Save**. The public page updates immediately; no code
 changes or redeploys are needed.
 
