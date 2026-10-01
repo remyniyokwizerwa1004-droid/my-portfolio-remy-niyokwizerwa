@@ -186,17 +186,6 @@
     background: linear-gradient(135deg, var(--teal), var(--gold));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .float-badge {
-    position: absolute; z-index: 2; display: flex; align-items: center; gap: 10px;
-    background: rgba(20, 43, 54, .92); border: 1px solid var(--border); backdrop-filter: blur(8px);
-    padding: 10px 16px; border-radius: 14px; font-size: .85rem; font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: float 5s ease-in-out infinite;
-  }
-  .float-badge svg { width: 20px; height: 20px; }
-  .float-badge.b1 { left: -28px; bottom: 16%; } .float-badge.b1 svg { color: var(--teal); }
-  .float-badge.b2 { right: -22px; top: 10%; animation-delay: 1.5s; } .float-badge.b2 svg { color: var(--gold); }
-  @keyframes float { 50% { transform: translateY(-10px); } }
-
   /* ---------- ABOUT ---------- */
   .about-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 48px; align-items: start; }
   .about-text p { color: var(--muted); font-size: 1.05rem; margin-bottom: 18px; white-space: pre-line; }
@@ -352,8 +341,6 @@
     .timeline { padding-left: 30px; }
     .timeline::before { left: 6px; }
     .t-item::before { left: -31px; }
-    .float-badge { font-size: .75rem; padding: 8px 12px; }
-    .float-badge.b1 { left: -14px; } .float-badge.b2 { right: -14px; }
     .contact-box { padding: 44px 20px; }
     .hero-actions .btn { flex: 1 1 auto; justify-content: center; }
     .lb-prev, .lb-next { top: auto; bottom: 16px; transform: none; }
@@ -490,8 +477,6 @@
       <div class="portrait">
         ${photo ? `<img src="${esc(photo)}" alt="${esc(c.name)}">` : `<span class="initials" aria-label="${esc(c.name)}">${esc(initials(c.name))}</span>`}
       </div>
-      <div class="float-badge b1">${icon('radio')} Telecom</div>
-      <div class="float-badge b2">${icon('chip')} Electronics</div>
     </div>
   </div>
 </header>`;
